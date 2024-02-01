@@ -6,7 +6,7 @@
 #include "TaskRouter.h"
 #include "project_configuration.h"
 
-RouterTask::RouterTask(TaskQueue<std::shared_ptr<APRSMessage>> &fromModem, TaskQueue<std::shared_ptr<APRSMessage>> &toModem, TaskQueue<std::shared_ptr<APRSMessage>> &toAprsIs, TaskQueue<std::shared_ptr<APRSMessage>> &toMQTT) : Task(TASK_ROUTER, TaskRouter), _fromModem(fromModem), _toModem(toModem), _toAprsIs(toAprsIs), _toMQTT(toMQTT) {
+RouterTask::RouterTask(TaskQueue<std::shared_ptr<APRSMessage>> &fromModem, TaskQueue<std::shared_ptr<APRSMessage>> &toModem, TaskQueue<std::shared_ptr<APRSMessage>> &toAprsIs, TaskQueue<std::shared_ptr<APRSMessage>> &toMQTT, TaskQueue<std::shared_ptr<APRSMessage>> &fromKiss, TaskQueue<std::shared_ptr<APRSMessage>> &toKiss) : Task(TASK_ROUTER, TaskRouter), _fromModem(fromModem), _toModem(toModem), _toAprsIs(toAprsIs), _toMQTT(toMQTT), _fromKiss(fromKiss), _toKiss(toKiss) {
 }
 
 RouterTask::~RouterTask() {
@@ -24,7 +24,11 @@ bool RouterTask::loop(System &system) {
       _toMQTT.addElement(modemMsg);
     }
 
-    if (system.getUserConfig()->aprs_is.active && modemMsg->getSource() != system.getUserConfig()->callsign) {
+    if (system.getUserConfig()->kiss.active) {
+      _toKiss.addElement(modemMsg);
+    }
+
+    if (system.getUserConfig()->aprs_is.active && modemMsg->getSource() != system.getUserConfig()->callsign && (system.getUserConfig()->callsign != "NOCALL-10")) {
       std::shared_ptr<APRSMessage> aprsIsMsg = std::make_shared<APRSMessage>(*modemMsg);
       String                       path      = aprsIsMsg->getPath();
 
@@ -50,7 +54,7 @@ bool RouterTask::loop(System &system) {
       }
     }
 
-    if (system.getUserConfig()->digi.active && modemMsg->getSource() != system.getUserConfig()->callsign) {
+    if (system.getUserConfig()->digi.active && modemMsg->getSource() != system.getUserConfig()->callsign && (system.getUserConfig()->callsign != "NOCALL-10")) {
       std::shared_ptr<APRSMessage> digiMsg = std::make_shared<APRSMessage>(*modemMsg);
       String                       path    = digiMsg->getPath();
 
@@ -64,6 +68,11 @@ bool RouterTask::loop(System &system) {
         _toModem.addElement(digiMsg);
       }
     }
+  }
+
+  if (system.getUserConfig()->kiss.active && !_fromKiss.empty()) {
+    std::shared_ptr<APRSMessage> msg = _fromKiss.getElement();
+    _toModem.addElement(msg);
   }
 
   _stateInfo = "Router done ";

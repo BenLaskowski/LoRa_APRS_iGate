@@ -117,6 +117,9 @@ void ProjectConfigurationManagement::readProjectConfiguration(DynamicJsonDocumen
 
   if (data.containsKey("board"))
     conf.board = data["board"].as<String>();
+
+  conf.kiss.active = data["kiss"]["active"] | true;
+  conf.kiss.port   = data["kiss"]["port"] | 8001;
 }
 
 void ProjectConfigurationManagement::writeProjectConfiguration(Configuration &conf, DynamicJsonDocument &data) {
@@ -186,4 +189,7 @@ void ProjectConfigurationManagement::writeProjectConfiguration(Configuration &co
   data["ntp_server"]            = conf.ntpServer;
 
   data["board"] = conf.board;
+
+  data["kiss"]["active"] = conf.kiss.active;
+  data["kiss"]["port"]   = conf.kiss.port;
 }

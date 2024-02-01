@@ -112,15 +112,17 @@ bool BeaconTask::sendBeacon(System &system) {
 
   system.getLogger().log(logging::LoggerLevel::LOGGER_LEVEL_INFO, getName(), "[%s] %s", timeString().c_str(), _beaconMsg->encode().c_str());
 
-  if (system.getUserConfig()->aprs_is.active) {
-    _toAprsIs.addElement(_beaconMsg);
-  }
+  if (system.getUserConfig()->callsign != "NOCALL-10") {
+    if (system.getUserConfig()->aprs_is.active) {
+      _toAprsIs.addElement(_beaconMsg);
+    }
 
-  if (system.getUserConfig()->beacon.send_on_hf) {
-    _toModem.addElement(_beaconMsg);
-  }
+    if (system.getUserConfig()->beacon.send_on_hf) {
+      _toModem.addElement(_beaconMsg);
+    }
 
-  system.getDisplay().addFrame(std::shared_ptr<DisplayFrame>(new TextFrame("BEACON", _beaconMsg->toString())));
+    system.getDisplay().addFrame(std::shared_ptr<DisplayFrame>(new TextFrame("BEACON", _beaconMsg->toString())));
+  }
 
   return true;
 }

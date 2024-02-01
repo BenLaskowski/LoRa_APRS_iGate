@@ -14,6 +14,7 @@
 #include "TaskDisplay.h"
 #include "TaskEth.h"
 #include "TaskFTP.h"
+#include "TaskKiss.h"
 #include "TaskMQTT.h"
 #include "TaskNTP.h"
 #include "TaskOTA.h"
@@ -32,6 +33,8 @@ TaskQueue<std::shared_ptr<APRSMessage>> toAprsIs;
 TaskQueue<std::shared_ptr<APRSMessage>> fromModem;
 TaskQueue<std::shared_ptr<APRSMessage>> toModem;
 TaskQueue<std::shared_ptr<APRSMessage>> toMQTT;
+TaskQueue<std::shared_ptr<APRSMessage>> fromKiss;
+TaskQueue<std::shared_ptr<APRSMessage>> toKiss;
 
 System        LoRaSystem;
 Configuration userConfig;
@@ -46,8 +49,9 @@ NTPTask      ntpTask;
 FTPTask      ftpTask;
 MQTTTask     mqttTask(toMQTT);
 AprsIsTask   aprsIsTask(toAprsIs, toModem);
-RouterTask   routerTask(fromModem, toModem, toAprsIs, toMQTT);
+RouterTask   routerTask(fromModem, toModem, toAprsIs, toMQTT, fromKiss, toKiss);
 BeaconTask   beaconTask(toModem, toAprsIs);
+KissTask     kissTask(LoRaSystem.getLogger(), fromKiss, toKiss);
 
 void setup() {
   Serial.begin(115200);
@@ -150,6 +154,10 @@ void setup() {
     if (userConfig.mqtt.active) {
       LoRaSystem.getTaskManager().addTask(&mqttTask);
     }
+
+    if (userConfig.kiss.active) {
+      LoRaSystem.getTaskManager().addTask(&kissTask);
+    }
   }
 
   esp_task_wdt_reset();
@@ -157,14 +165,14 @@ void setup() {
 
   LoRaSystem.getDisplay().showSpashScreen("LoRa APRS iGate", VERSION);
 
-  if (userConfig.callsign == "NOCALL-10") {
+  if (userConfig.callsign == "NOCALL-10" && !userConfig.kiss.active) {
     LoRaSystem.getLogger().log(logging::LoggerLevel::LOGGER_LEVEL_ERROR, MODULE_NAME, "You have to change your settings in 'data/is-cfg.json' and upload it via 'Upload File System image'!");
     LoRaSystem.getDisplay().showStatusScreen("ERROR", "You have to change your settings in 'data/is-cfg.json' and upload it via \"Upload File System image\"!");
     while (true) {
       esp_task_wdt_reset();
     }
   }
-  if ((!userConfig.aprs_is.active) && !(userConfig.digi.active)) {
+  if ((!userConfig.aprs_is.active) && !(userConfig.digi.active) && !(userConfig.kiss.active)) {
     LoRaSystem.getLogger().log(logging::LoggerLevel::LOGGER_LEVEL_ERROR, MODULE_NAME, "No mode selected (iGate or Digi)! You have to activate one of iGate or Digi.");
     LoRaSystem.getDisplay().showStatusScreen("ERROR", "No mode selected (iGate or Digi)! You have to activate one of iGate or Digi.");
     while (true)

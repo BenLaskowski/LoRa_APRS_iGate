@@ -150,22 +150,32 @@ public:
     int    port;
   };
 
+  class KissServer {
+  public:
+    KissServer() : active(true), port(8001) {
+    }
+
+    bool active;
+    int  port;
+  };
+
   Configuration() : callsign("NOCALL-10"), ntpServer("pool.ntp.org"), board("") {
   }
 
-  String  callsign;
-  Network network;
-  Wifi    wifi;
-  Beacon  beacon;
-  APRS_IS aprs_is;
-  Digi    digi;
-  LoRa    lora;
-  Display display;
-  Ftp     ftp;
-  MQTT    mqtt;
-  Syslog  syslog;
-  String  ntpServer;
-  String  board;
+  String     callsign;
+  Network    network;
+  Wifi       wifi;
+  Beacon     beacon;
+  APRS_IS    aprs_is;
+  Digi       digi;
+  LoRa       lora;
+  Display    display;
+  Ftp        ftp;
+  MQTT       mqtt;
+  Syslog     syslog;
+  String     ntpServer;
+  String     board;
+  KissServer kiss;
 };
 
 class ProjectConfigurationManagement : public ConfigurationManagement {
